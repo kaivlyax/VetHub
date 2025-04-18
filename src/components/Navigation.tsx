@@ -14,7 +14,7 @@ const Navigation = () => {
             <Link to="/contact" className="text-lg hover:text-primary transition-colors">Contact</Link>
           </nav>
         </div>
-        <Link to="/diagnosis">
+        <Link to="/register">
           <Button variant="outline" className="bg-[#d1ded9] hover:bg-[#c1cec9] border-0 text-lg font-serif">
             Get Started
           </Button>

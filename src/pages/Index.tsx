@@ -20,7 +20,7 @@ const Index = () => {
             <p className="text-xl mb-8 max-w-3xl mx-auto">
               Transforming dog images into health insights. Know your pup's ailments with a click!
             </p>
-            <Link to="/diagnosis">
+            <Link to="/register">
               <Button className="bg-[#d1ded9] hover:bg-[#c1cec9] text-black border-0 px-8 py-6 text-lg">
                 Start Now
               </Button>
