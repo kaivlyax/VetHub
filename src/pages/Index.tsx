@@ -1,7 +1,7 @@
 
 import Navigation from "@/components/Navigation";
 import RegistrationForm from "@/components/RegistrationForm";
-import { MicroscopeIcon, Brain, Activity } from "lucide-react";
+import { MicroscopeIcon, Brain, Activity, Building2, Users2, Stethoscope } from "lucide-react";
 
 const Index = () => {
   return (
@@ -21,6 +21,30 @@ const Index = () => {
             Advanced medical image analysis powered by AI for accurate disease classification
           </p>
         </header>
+
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <Building2 className="h-8 w-8 text-primary mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Modern Facilities</h3>
+            <p className="text-muted-foreground">
+              State-of-the-art medical facilities equipped with the latest technology
+            </p>
+          </div>
+          <div className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <Users2 className="h-8 w-8 text-primary mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Expert Team</h3>
+            <p className="text-muted-foreground">
+              Experienced healthcare professionals dedicated to your well-being
+            </p>
+          </div>
+          <div className="p-6 bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+            <Stethoscope className="h-8 w-8 text-primary mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Quality Care</h3>
+            <p className="text-muted-foreground">
+              Personalized medical attention and comprehensive healthcare solutions
+            </p>
+          </div>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div className="space-y-6">
