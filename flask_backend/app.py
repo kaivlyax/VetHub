@@ -1,5 +1,5 @@
 import os
-import gdown
+import requests
 import numpy as np
 from flask import Flask, render_template, request
 from tensorflow.keras.models import load_model
@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 # --- CONFIG ---
 UPLOAD_FOLDER = 'static/uploads'
 MODEL_PATH = 'flask-backend/model.h5'
-DRIVE_FILE_ID = os.getenv('DRIVE_FILE_ID')
+MODEL_URL = 'https://github.com/kaivlyax/VetHubb/releases/download/dogCNNv1.0.0/dog_disease_model_96.h5'
 
 # --- Create Flask App ---
 app = Flask(__name__)
@@ -18,8 +18,15 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # --- Download Model If Not Exists ---
 if not os.path.exists(MODEL_PATH):
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-    print("Downloading model from Google Drive...")
-    gdown.download(f"https://drive.google.com/uc?id={DRIVE_FILE_ID}", MODEL_PATH, quiet=False)
+    print("Downloading model from GitHub...")
+    
+    # Download the model file from the GitHub release URL
+    response = requests.get(MODEL_URL)
+    if response.status_code == 200:
+        with open(MODEL_PATH, 'wb') as file:
+            file.write(response.content)
+    else:
+        print(f"Failed to download model. Status code: {response.status_code}")
 
 # --- Load Model ---
 model = load_model(MODEL_PATH)
@@ -94,4 +101,3 @@ def display_image(filename):
 # --- Run ---
 if __name__ == '__main__':
     app.run(debug=True)
-
