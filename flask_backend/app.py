@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 # --- CONFIG ---
 UPLOAD_FOLDER = 'static/uploads'
 MODEL_PATH = 'flask-backend/model.h5'
-DRIVE_FILE_ID = '1x6FQzt3OQin-SoozDoJkg_Q0mMIzjO4s'
+DRIVE_FILE_ID = os.getenv('DRIVE_FILE_ID')
 
 # --- Create Flask App ---
 app = Flask(__name__)
