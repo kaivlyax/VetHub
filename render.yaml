@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: VetHub
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn flask_backend.app:app
+    region: oregon
+    plan: free
