@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 # --- CONFIG ---
 UPLOAD_FOLDER = 'static/uploads'
-MODEL_PATH = 'flask-backend/model.h5'
+MODEL_PATH = 'model.h5'
 MODEL_URL = 'https://github.com/kaivlyax/VetHubb/releases/download/dogCNNv1.0.0/dog_disease_model_96.h5'
 
 # --- Create Flask App ---
