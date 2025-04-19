@@ -2,8 +2,9 @@ import os
 import requests
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for
-from tensorflow.keras.models import load_model, model_from_json
+from tensorflow.keras.models import load_model, model_from_json, Model
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.layers import Input
 from werkzeug.utils import secure_filename
 import json
 import re
@@ -44,19 +45,6 @@ def download_from_gdrive(gdrive_url, output_path):
     
     # Save the file
     if response.status_code == 200:
-        # Check if response is HTML (Google Drive shows HTML for large files)
-        content_type = response.headers.get('Content-Type', '')
-        if 'text/html' in content_type and 'Drive - Google Drive' in response.text:
-            print("Received HTML instead of file - file may be too large for direct download")
-            print("Trying alternative download method...")
-            
-            # Try an alternative method for large files
-            response = session.get(
-                "https://drive.google.com/uc?export=download&id=1dh2J-arVsnBJA7xVRZP9r1e4x8qPUeAc&confirm=t",
-                stream=True,
-                timeout=120
-            )
-            
         with open(output_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):  # Larger chunk size
                 if chunk:
@@ -165,6 +153,9 @@ def load_model_safely(model_path):
         # 1. First try normal loading
         print(f"Attempt 1: Normal loading from {model_path}")
         model = load_model(model_path)
+        if model is None:
+            raise Exception("Model is None after loading")
+        print("Model loaded successfully.")
         return model
     except Exception as e1:
         print(f"Normal loading failed: {str(e1)}")
@@ -172,7 +163,10 @@ def load_model_safely(model_path):
         try:
             # 2. Try with custom objects
             print("Attempt 2: Loading with custom objects")
-            model = load_model(model_path, custom_objects={'batch_shape': lambda x: None}, compile=False)
+            model = load_model(model_path, custom_objects={'InputLayer': InputLayer, 'batch_shape': lambda x: None}, compile=False)
+            if model is None:
+                raise Exception("Model is None after custom loading")
+            print("Model loaded successfully with custom objects.")
             return model
         except Exception as e2:
             print(f"Loading with custom objects failed: {str(e2)}")
@@ -182,7 +176,11 @@ def load_model_safely(model_path):
                 print("Attempt 3: Extracting architecture and weights separately")
                 if extract_model_architecture_weights(model_path, MODEL_ARCH_PATH, MODEL_WEIGHTS_PATH):
                     if reconstruct_model(MODEL_ARCH_PATH, MODEL_WEIGHTS_PATH, MODEL_CONVERTED_PATH):
-                        return load_model(MODEL_CONVERTED_PATH)
+                        model = load_model(MODEL_CONVERTED_PATH)
+                        if model is None:
+                            raise Exception("Model is None after reconstruction")
+                        print("Model loaded successfully after reconstruction.")
+                        return model
             except Exception as e3:
                 print(f"Architecture/weights approach failed: {str(e3)}")
                 
@@ -190,12 +188,17 @@ def load_model_safely(model_path):
                 print("Attempt 4: Creating a compatible model")
                 model = create_compatible_model()
                 model.save(MODEL_CONVERTED_PATH)
+                if model is None:
+                    raise Exception("Model is None after creating compatible model")
+                print("Compatible model created and saved.")
                 return model
 
 # --- Download and prepare the model ---
 try:
-    # Download model if it doesn't exist
-    if not os.path.exists(MODEL_PATH) and not os.path.exists(MODEL_CONVERTED_PATH):
+    # Check if the model file exists and is not empty
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) == 0:
+        print(f"Model file {MODEL_PATH} does not exist or is empty!")
+        # Download model if it doesn't exist
         success = download_from_gdrive(MODEL_URL, MODEL_PATH)
         if not success:
             raise FileNotFoundError("Could not download the model file.")
@@ -243,55 +246,41 @@ disease_info = {
     },
     "Ringworm": {
         "symptoms": "Circular patches of hair loss, red and scaly skin",
-        "treatment": "Topical antifungals, lime sulfur dips, antifungal medication"
+        "treatment": "Topical antifungals, lime sulfur dips, antifungal medications"
     }
 }
 
-# --- Routes ---
+# --- Flask Routes ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return "No file uploaded", 400
-    
-    file = request.files['image']
+    if 'file' not in request.files:
+        return redirect(request.url)
+    file = request.files['file']
     if file.filename == '':
-        return "Empty filename", 400
+        return redirect(request.url)
     
+    # Save the uploaded file
     filename = secure_filename(file.filename)
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
+
+    # Preprocess the image for model prediction
+    img = image.load_img(file_path, target_size=(224, 224))  # Adjust size if needed
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
     
-    try:
-        # Preprocess image
-        img = image.load_img(file_path, target_size=(224, 224))  # match model input size
-        img_array = image.img_to_array(img)
-        img_array = np.expand_dims(img_array, axis=0) / 255.0
-        
-        # Predict
-        prediction = model.predict(img_array)
-        predicted_class = class_names[np.argmax(prediction)]
-        confidence = float(np.max(prediction)) * 100
-        
-        # Get disease info
-        info = disease_info.get(predicted_class, {"symptoms": "Unknown", "treatment": "Unknown"})
-        
-        return render_template('result.html',
-                              filename=filename,
-                              disease=predicted_class,
-                              confidence=f"{confidence:.2f}%",
-                              symptoms=info["symptoms"],
-                              treatment=info["treatment"])
-    except Exception as e:
-        return f"Error processing image: {str(e)}", 500
+    # Model prediction
+    preds = model.predict(img_array)
+    predicted_class = np.argmax(preds, axis=1)
+    disease = class_names[predicted_class[0]]
+    symptoms = disease_info[disease]["symptoms"]
+    treatment = disease_info[disease]["treatment"]
+    
+    return render_template('result.html', disease=disease, symptoms=symptoms, treatment=treatment)
 
-@app.route('/display/<filename>')
-def display_image(filename):
-    return redirect(url_for('static', filename=f'uploads/{filename}'))
-
-# --- Run ---
 if __name__ == '__main__':
     app.run(debug=True)
