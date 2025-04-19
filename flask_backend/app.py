@@ -17,43 +17,50 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- Download Model If Not Exists ---
 if not os.path.exists(MODEL_PATH):
-    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    model_dir = os.path.dirname(MODEL_PATH)
+    if model_dir:
+        os.makedirs(model_dir, exist_ok=True)
+
     print("Downloading model from GitHub...")
-    
-    # Download the model file from the GitHub release URL
     response = requests.get(MODEL_URL)
     if response.status_code == 200:
         with open(MODEL_PATH, 'wb') as file:
             file.write(response.content)
+        print("Model downloaded successfully.")
     else:
         print(f"Failed to download model. Status code: {response.status_code}")
+        raise FileNotFoundError("Could not download the model file.")
 
 # --- Load Model ---
 model = load_model(MODEL_PATH)
 
 # --- Labels to Disease Mapping ---
-class_names = ['Allergy', 'Fungal Infection', 'Healthy', 'Mange', 'Pyoderma']  # Update as per your model classes
+class_names = ['Demodicosis', 'Dermatitis', 'Fungal-infections', 'Healthy', 'Hypersensitivity', 'Ringworm']
 
 disease_info = {
-    "Allergy": {
-        "symptoms": "Itching, redness, and swelling",
-        "treatment": "Antihistamines, avoid allergens"
+    "Demodicosis": {
+        "symptoms": "Hair loss, scaling, redness, and sometimes secondary infections",
+        "treatment": "Medicated shampoos, oral ivermectin, antibiotics for infections"
     },
-    "Fungal Infection": {
-        "symptoms": "Scaly, crusty skin, hair loss",
-        "treatment": "Topical antifungal creams or oral meds"
+    "Dermatitis": {
+        "symptoms": "Redness, swelling, itching, and discomfort on the skin",
+        "treatment": "Topical steroids, antifungal creams, hypoallergenic diets"
+    },
+    "Fungal-infections": {
+        "symptoms": "Crusty, flaky skin, musty odor, itchiness",
+        "treatment": "Topical antifungal creams, medicated baths"
     },
     "Healthy": {
-        "symptoms": "No symptoms — the skin looks normal!",
-        "treatment": "No treatment required"
+        "symptoms": "No visible skin issues; fur is shiny and skin is clear",
+        "treatment": "No treatment needed"
     },
-    "Mange": {
-        "symptoms": "Severe itching, sores, scabs",
-        "treatment": "Medicated shampoos, oral medications"
+    "Hypersensitivity": {
+        "symptoms": "Frequent scratching, red skin, inflamed patches",
+        "treatment": "Avoid allergens, antihistamines, omega-3 fatty acids"
     },
-    "Pyoderma": {
-        "symptoms": "Red bumps, pustules, hair loss",
-        "treatment": "Antibiotics and medicated washes"
+    "Ringworm": {
+        "symptoms": "Circular patches of hair loss, red and scaly skin",
+        "treatment": "Topical antifungals, lime sulfur dips, antifungal medication"
     }
 }
 
