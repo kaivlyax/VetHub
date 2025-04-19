@@ -4,25 +4,28 @@ from PIL import Image
 from flask import Flask, render_template, request
 from tensorflow.keras.models import load_model
 
+# Flask app setup
 app = Flask(__name__)
 
+# Path to save uploads
 UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Load model from the GitHub-cloned directory
-MODEL_PATH = "flask_backend/dog_disease_model_96_tf"
+# Path to your SavedModel format model
+MODEL_PATH = 'flask_backend/dog_disease_model_96_tf'
+
+# Load the TensorFlow SavedModel
+model = None
+try:
+    model = load_model(MODEL_PATH)
+    print("✅ Model loaded successfully.")
+except Exception as e:
+    print(f"❌ Model loading failed: {e}")
 
 # Class labels (update if needed)
 CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 
-# Load the model
-model = None
-try:
-    model = load_model(MODEL_PATH)
-    print("✅ Model loaded successfully from TensorFlow format.")
-except Exception as e:
-    print(f"❌ Model loading failed: {e}")
-
+# Routes
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -36,16 +39,16 @@ def predict():
     if not file:
         return render_template("result.html", result="❌ No image uploaded.", filename=None)
 
-    # Save uploaded image
+    # Save the uploaded image
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
 
-    # Prepare the image
+    # Preprocess the image
     img = Image.open(filepath).convert("RGB")
     img = img.resize((300, 300))
     img_array = np.expand_dims(np.array(img) / 255.0, axis=0)
 
-    # Predict
+    # Run prediction
     preds = model.predict(img_array)
     class_index = np.argmax(preds[0])
     confidence = preds[0][class_index]
