@@ -1,5 +1,4 @@
 import os
-import gdown
 import numpy as np
 from PIL import Image
 from flask import Flask, render_template, request
@@ -10,26 +9,19 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-MODEL_PATH = "flask_backend/dog_disease_model.h5"
-DRIVE_FILE_ID = "1dh2J-arVsnBJA7xVRZP9r1e4x8qPUeAc"
+# Load model from the GitHub-cloned directory
+MODEL_PATH = "flask_backend/dog_disease_model_96_tf"
 
-def download_model():
-    if not os.path.exists(MODEL_PATH):
-        print("Downloading model from Google Drive...")
-        gdown.download(f"https://drive.google.com/uc?id={DRIVE_FILE_ID}", MODEL_PATH, quiet=False)
-        print("Model downloaded.")
+# Class labels (update if needed)
+CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 
 # Load the model
 model = None
 try:
-    download_model()
     model = load_model(MODEL_PATH)
-    print("✅ Model loaded successfully.")
+    print("✅ Model loaded successfully from TensorFlow format.")
 except Exception as e:
     print(f"❌ Model loading failed: {e}")
-
-# Class labels (update if needed)
-CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 
 @app.route("/")
 def index():
