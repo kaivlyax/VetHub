@@ -2,9 +2,8 @@ import os
 import requests
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for
-from tensorflow.keras.models import load_model, model_from_json, Model
+from tensorflow.keras.models import load_model, model_from_json
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.layers import Input
 from werkzeug.utils import secure_filename
 import json
 import re
