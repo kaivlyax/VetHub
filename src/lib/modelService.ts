@@ -84,14 +84,40 @@ export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResu
     // Send to backend API with the correct URL
     console.log("Sending image to backend for classification...");
     
-    // Use the correct URL for the Flask backend
-    const response = await fetch('/flask_backend/predict', {
-      method: 'POST',
-      body: formData,
-    });
+    // Define all possible endpoint URLs to try
+    const possibleEndpoints = [
+      '/flask_backend/predict',
+      '/predict',
+      '/static/predict'
+    ];
     
-    if (!response.ok) {
-      throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+    let response = null;
+    let lastError = null;
+    
+    // Try each endpoint until one works
+    for (const endpoint of possibleEndpoints) {
+      try {
+        console.log(`Trying endpoint: ${endpoint}`);
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (response.ok) {
+          console.log(`Successful response from ${endpoint}`);
+          break;
+        } else {
+          console.log(`Failed response from ${endpoint}: ${response.status}`);
+        }
+      } catch (error) {
+        console.log(`Error with endpoint ${endpoint}:`, error);
+        lastError = error;
+      }
+    }
+    
+    // If no successful response, throw the last error
+    if (!response || !response.ok) {
+      throw new Error(`All endpoints failed. Last error: ${lastError || 'Unknown error'}`);
     }
     
     // Parse the JSON response
