@@ -10,7 +10,7 @@ import gdown
 # Configure Flask to serve from root path
 app = Flask(__name__, 
             static_folder="static", 
-            static_url_path="")
+            static_url_path="/static")
 
 UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -41,6 +41,12 @@ try:
     print("✅ Model loaded successfully.")
 except Exception as e:
     print(f"❌ Model loading failed: {e}")
+    # Try loading the local TF model as a fallback
+    try:
+        model = load_model("flask_backend/dog_disease_model_96_tf")
+        print("✅ Loaded fallback model from dog_disease_model_96_tf")
+    except Exception as e:
+        print(f"❌ Fallback model loading failed: {e}")
 
 # Class labels
 CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
@@ -49,14 +55,17 @@ CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 def index():
     return render_template("index.html")
 
-# A single predict endpoint that's accessible from the frontend
+# API endpoints - make sure they're accessible from both paths
 @app.route("/api/predict", methods=["POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     if model is None:
+        print("❌ Error: Model not loaded")
         return jsonify({"error": "Model not loaded"}), 500
 
     file = request.files.get("image")
     if not file:
+        print("❌ Error: No image uploaded")
         return jsonify({"error": "No image uploaded"}), 400
 
     # Save the uploaded image
@@ -95,10 +104,17 @@ def predict():
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-# Debug endpoint
+# Debug endpoint available at both paths
 @app.route('/api/status')
+@app.route('/status')
 def status():
-    return jsonify({"status": "ok", "model_loaded": model is not None})
+    model_status = "loaded" if model is not None else "not loaded"
+    print(f"✅ Status check: Model is {model_status}")
+    return jsonify({
+        "status": "ok", 
+        "model_loaded": model is not None,
+        "model_path": MODEL_PATH if model is not None else None
+    })
 
 if __name__ == "__main__":
     # Enable more verbose logging

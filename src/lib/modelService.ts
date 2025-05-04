@@ -74,19 +74,24 @@ export interface DiagnosisResult {
 // Function to classify an uploaded image using the Flask backend
 export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResult> => {
   try {
+    console.log("Starting image classification process...");
+    
     // First, check if the backend is available
+    let backendAvailable = false;
     try {
-      const statusCheck = await fetch('/api/status');
-      if (!statusCheck.ok) {
-        console.log("Backend status check failed, server may be down");
-      } else {
-        const statusData = await statusCheck.json();
+      console.log("Checking backend status...");
+      const statusResponse = await fetch('/api/status');
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
         console.log("Backend status:", statusData);
+        backendAvailable = true;
+      } else {
+        console.log("Backend status check failed with status:", statusResponse.status);
       }
     } catch (error) {
       console.log("Backend status check failed:", error);
     }
-
+    
     // Convert data URL to blob
     const imageBlob = await fetch(imageDataUrl).then(r => r.blob());
     
@@ -103,12 +108,17 @@ export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResu
     });
     
     if (!response.ok) {
+      console.error(`Server responded with ${response.status}: ${response.statusText}`);
       throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
     }
     
     // Parse the JSON response
     const data = await response.json();
     console.log("Received classification result:", data);
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
     
     // Match the disease with our database
     const diseaseName = data.disease;
