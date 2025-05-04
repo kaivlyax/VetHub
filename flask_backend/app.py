@@ -3,12 +3,14 @@ import os
 import numpy as np
 from PIL import Image
 import json
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, url_for
 from tensorflow.keras.models import load_model
 import gdown
 
-# Change the static_url_path parameter to be empty, which will make static files accessible at /static
-app = Flask(__name__, static_folder="static", static_url_path="")
+# Configure Flask to serve from root path
+app = Flask(__name__, 
+            static_folder="static", 
+            static_url_path="")
 
 UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -47,10 +49,8 @@ CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 def index():
     return render_template("index.html")
 
-# Make the predict endpoint accessible at multiple paths to ensure it can be found
-@app.route("/predict", methods=["POST"])
-@app.route("/flask_backend/predict", methods=["POST"])
-@app.route("/static/predict", methods=["POST"])
+# A single predict endpoint that's accessible from the frontend
+@app.route("/api/predict", methods=["POST"])
 def predict():
     if model is None:
         return jsonify({"error": "Model not loaded"}), 500
@@ -62,6 +62,8 @@ def predict():
     # Save the uploaded image
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
+    
+    print(f"✅ Image saved to {filepath}")
 
     try:
         # Prepare the image
@@ -75,6 +77,8 @@ def predict():
         confidence = float(preds[0][class_index])  # Convert to float for JSON serialization
         disease = CLASS_NAMES[class_index]
 
+        print(f"✅ Prediction: {disease} with {confidence:.2f} confidence")
+
         # Return result as JSON
         return jsonify({
             "disease": disease,
@@ -86,23 +90,21 @@ def predict():
         print(f"❌ Prediction error: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Serve static files through multiple paths to ensure they can be found
-@app.route('/static/<path:path>')
-def serve_static(path):
-    return send_from_directory('static', path)
-
-@app.route('/flask_backend/static/<path:path>')
-def serve_flask_static(path):
-    return send_from_directory('static', path)
-
+# Serve static files
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-# Add a debug endpoint to check if the server is running
-@app.route('/status')
+# Debug endpoint
+@app.route('/api/status')
 def status():
     return jsonify({"status": "ok", "model_loaded": model is not None})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Enable more verbose logging
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    
+    # Run the Flask app
+    print("🚀 Starting Flask server...")
+    app.run(debug=True, host='0.0.0.0', port=5000)

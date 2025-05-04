@@ -74,6 +74,19 @@ export interface DiagnosisResult {
 // Function to classify an uploaded image using the Flask backend
 export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResult> => {
   try {
+    // First, check if the backend is available
+    try {
+      const statusCheck = await fetch('/api/status');
+      if (!statusCheck.ok) {
+        console.log("Backend status check failed, server may be down");
+      } else {
+        const statusData = await statusCheck.json();
+        console.log("Backend status:", statusData);
+      }
+    } catch (error) {
+      console.log("Backend status check failed:", error);
+    }
+
     // Convert data URL to blob
     const imageBlob = await fetch(imageDataUrl).then(r => r.blob());
     
@@ -81,43 +94,16 @@ export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResu
     const formData = new FormData();
     formData.append('image', imageBlob, 'image.jpg');
     
-    // Send to backend API with the correct URL
+    // Send to backend API
     console.log("Sending image to backend for classification...");
     
-    // Define all possible endpoint URLs to try
-    const possibleEndpoints = [
-      '/flask_backend/predict',
-      '/predict',
-      '/static/predict'
-    ];
+    const response = await fetch('/api/predict', {
+      method: 'POST',
+      body: formData,
+    });
     
-    let response = null;
-    let lastError = null;
-    
-    // Try each endpoint until one works
-    for (const endpoint of possibleEndpoints) {
-      try {
-        console.log(`Trying endpoint: ${endpoint}`);
-        response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (response.ok) {
-          console.log(`Successful response from ${endpoint}`);
-          break;
-        } else {
-          console.log(`Failed response from ${endpoint}: ${response.status}`);
-        }
-      } catch (error) {
-        console.log(`Error with endpoint ${endpoint}:`, error);
-        lastError = error;
-      }
-    }
-    
-    // If no successful response, throw the last error
-    if (!response || !response.ok) {
-      throw new Error(`All endpoints failed. Last error: ${lastError || 'Unknown error'}`);
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
     }
     
     // Parse the JSON response
