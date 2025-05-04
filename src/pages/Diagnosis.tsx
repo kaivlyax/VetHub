@@ -6,19 +6,19 @@ import { useState } from "react";
 import { classifyImage } from "@/lib/modelService";
 import { Brain, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Diagnosis = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState<any | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleImageUpload = (file: File, url: string) => {
     setImageFile(file);
     setImageUrl(url);
     setDiagnosis(null);
-    setError(null);
   };
 
   const analyzeImage = async () => {
@@ -26,13 +26,21 @@ const Diagnosis = () => {
 
     try {
       setIsAnalyzing(true);
-      setError(null);
       
       const result = await classifyImage(imageUrl);
       setDiagnosis(result);
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Detected: ${result.disease} with ${Math.round(result.confidence * 100)}% confidence`,
+      });
     } catch (err) {
-      setError("An error occurred during image analysis. Please try again.");
       console.error(err);
+      toast({
+        title: "Analysis Failed",
+        description: "Something went wrong during the image analysis.",
+        variant: "destructive",
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -47,7 +55,7 @@ const Diagnosis = () => {
             <div className="bg-white rounded-lg shadow-sm p-6 border">
               <h2 className="text-2xl font-semibold mb-4 flex items-center">
                 <Brain className="mr-2 h-6 w-6 text-primary" />
-                Image Analysis
+                Dog Skin Condition Analysis
               </h2>
               
               <ImageUploader onImageUpload={handleImageUpload} />
@@ -63,12 +71,6 @@ const Diagnosis = () => {
                     <Activity className="mr-2 h-5 w-5" />
                     {isAnalyzing ? "Analyzing..." : "Analyze Image"}
                   </Button>
-                </div>
-              )}
-
-              {error && (
-                <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
-                  {error}
                 </div>
               )}
             </div>

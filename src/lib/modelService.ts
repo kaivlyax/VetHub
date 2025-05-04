@@ -1,129 +1,112 @@
 
-import { pipeline } from "@huggingface/transformers";
-
-// Example disease database - this would ideally come from your model or a separate database
+// Define disease database for dog skin conditions
 const diseaseDatabase = {
-  "Pneumonia": {
+  "Allergy": {
     symptoms: [
-      "Chest pain when breathing or coughing",
-      "Confusion or changes in mental awareness (in adults age 65 and older)",
-      "Cough, which may produce phlegm",
-      "Fatigue",
-      "Fever, sweating and shaking chills",
-      "Lower than normal body temperature (in adults older than age 65 and people with weak immune systems)",
-      "Nausea, vomiting or diarrhea",
-      "Shortness of breath"
+      "Itching and scratching",
+      "Red, inflamed skin",
+      "Hair loss",
+      "Skin rash or hives",
+      "Recurring ear infections",
+      "Paw licking or chewing",
+      "Rubbing face on surfaces"
     ],
-    treatment: "Treatment involves antibiotics and respiratory support. For bacterial pneumonia, antibiotics are prescribed. For viral pneumonia, antiviral medications may be used. Rest, fluids, and fever-reducing medications are also recommended. In severe cases, hospitalization may be necessary for oxygen therapy."
+    treatment: "Treatment typically involves identifying and eliminating the allergen if possible. Medications like antihistamines, steroids, or immunotherapy may be prescribed. Special shampoos and dietary changes can also help manage symptoms. Regular bathing with hypoallergenic shampoos can provide relief."
   },
-  "Tuberculosis": {
+  "Infection": {
     symptoms: [
-      "Coughing that lasts three or more weeks",
-      "Coughing up blood",
-      "Chest pain, or pain with breathing or coughing",
-      "Unintentional weight loss",
-      "Fatigue",
-      "Fever",
-      "Night sweats",
-      "Chills",
-      "Loss of appetite"
+      "Redness and swelling",
+      "Pus or discharge",
+      "Foul odor",
+      "Excessive scratching or licking of affected area",
+      "Pain when touched",
+      "Crusty or scabby skin",
+      "Hot spots (acute moist dermatitis)"
     ],
-    treatment: "Treatment usually involves taking antibiotics for at least six to nine months. The exact drugs and length of treatment depend on age, overall health, possible drug resistance, the form of TB (latent or active) and the infection's location in the body."
+    treatment: "Bacterial infections usually require antibiotics, either topical, oral, or both. Fungal infections need antifungal medications. The affected area should be kept clean and dry. In some cases, medicated shampoos or sprays may be recommended. Complete the full course of medication even if symptoms improve."
   },
-  "COVID-19": {
+  "Mange": {
     symptoms: [
-      "Fever or chills",
-      "Cough",
-      "Shortness of breath or difficulty breathing",
-      "Fatigue",
-      "Muscle or body aches",
-      "Headache",
-      "New loss of taste or smell",
-      "Sore throat",
-      "Congestion or runny nose",
-      "Nausea or vomiting",
-      "Diarrhea"
+      "Intense itching",
+      "Hair loss in patches or widespread",
+      "Red, inflamed skin",
+      "Crusty or scaly skin",
+      "Sores and lesions",
+      "Thickened skin (in chronic cases)",
+      "Secondary infections"
     ],
-    treatment: "Treatment depends on severity. Mild cases may require rest, fluids, and over-the-counter medications to relieve symptoms. More severe cases may need antiviral medications, supplemental oxygen, or other interventions. COVID-19 vaccines are available to prevent severe illness."
+    treatment: "Treatment depends on the type of mange (demodectic or sarcoptic). Medications like ivermectin, milbemycin, or selamectin may be prescribed. Medicated dips or shampoos containing benzoyl peroxide can help. The living environment needs to be thoroughly cleaned to prevent reinfestation."
   },
-  "Skin Cancer": {
+  "Normal": {
     symptoms: [
-      "A new, unusual growth or a change in an existing mole",
-      "A sore that doesn't heal",
-      "Spread of pigment from the border of a spot into surrounding skin",
-      "Redness or a new swelling beyond the border of the mole",
-      "Change in sensation, such as itchiness, tenderness, or pain",
-      "Change in the surface of a mole – scaliness, oozing, bleeding, or the appearance of a lump or bump"
+      "No visible skin abnormalities",
+      "Regular coat appearance",
+      "No excessive scratching or biting",
+      "Skin is supple and elastic",
+      "No redness or inflammation",
+      "No unusual odor",
+      "Normal shedding patterns"
     ],
-    treatment: "Treatment depends on the type, size, and stage of cancer. Options include surgical removal, radiation therapy, chemotherapy, immunotherapy, and targeted therapy. Regular skin checks and sun protection are important preventive measures."
+    treatment: "Regular grooming, balanced diet, and routine veterinary check-ups are recommended to maintain healthy skin and coat. Use dog-appropriate shampoos when bathing. Monitor for any changes in skin condition."
   },
-  "Cataracts": {
+  "Tumor": {
     symptoms: [
-      "Clouded, blurred or dim vision",
-      "Increasing difficulty with vision at night",
-      "Sensitivity to light and glare",
-      "Need for brighter light for reading and other activities",
-      "Seeing \"halos\" around lights",
-      "Frequent changes in eyeglass or contact lens prescription",
-      "Fading or yellowing of colors",
-      "Double vision in a single eye"
+      "Visible lump or growth on or under the skin",
+      "Change in size, shape, or color of existing growth",
+      "Sores that don't heal",
+      "Bleeding or discharge from a growth",
+      "Pain or tenderness in affected area",
+      "Loss of appetite or weight loss",
+      "Difficulty breathing or swallowing (if tumor affects these areas)"
     ],
-    treatment: "Surgery is the only effective treatment for cataracts. The cloudy lens is removed and replaced with an artificial lens. The procedure is generally safe and improves vision in most people. Regular eye exams are important for early detection."
+    treatment: "Treatment depends on the type, size, and location of the tumor. Options include surgical removal, chemotherapy, radiation therapy, or a combination approach. Early detection and treatment significantly improve the prognosis. Regular follow-up examinations are essential to monitor for recurrence."
   }
 };
 
-// Cache for loaded models
-let imageClassifier: any = null;
+// Interface for our diagnosis result
+export interface DiagnosisResult {
+  disease: string;
+  confidence: number;
+  symptoms: string[];
+  treatment: string;
+}
 
-// Initialize model
-const initModel = async () => {
-  if (!imageClassifier) {
-    try {
-      // In a real application, this would be your custom model path
-      // For this demo, we're using a generic image classification model
-      imageClassifier = await pipeline(
-        "image-classification",
-        "microsoft/resnet-50"
-      );
-      
-      console.log("Model loaded successfully");
-    } catch (error) {
-      console.error("Error loading model:", error);
-      throw new Error("Failed to load image classification model");
-    }
-  }
-  return imageClassifier;
-};
-
-// Map model classifications to our disease database
-// In a real application, your model would directly predict diseases
-const mapClassificationToDisease = (classification: any) => {
-  // This is just for demonstration - your trained model would give accurate disease predictions
-  // Here we're mapping random image classes to our disease database
-  const diseases = Object.keys(diseaseDatabase);
-  const randomIndex = Math.floor(Math.random() * diseases.length);
-  return diseases[randomIndex];
-};
-
-export const classifyImage = async (imageUrl: string) => {
+// Function to classify an uploaded image using the Flask backend
+export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResult> => {
   try {
-    // Initialize model if not already loaded
-    const classifier = await initModel();
+    // Convert data URL to blob
+    const imageBlob = await fetch(imageDataUrl).then(r => r.blob());
     
-    // Classify image
-    console.log("Classifying image...");
+    // Create form data for API request
+    const formData = new FormData();
+    formData.append('image', imageBlob, 'image.jpg');
     
-    // For demonstration purposes, we'll simulate a model prediction
-    // In a real application, this would use your actual model
-    const result = await simulateModelPrediction(imageUrl);
+    // Send to backend API
+    console.log("Sending image to backend for classification...");
+    const response = await fetch('/predict', {
+      method: 'POST',
+      body: formData,
+    });
     
-    // Map to disease information
-    const diseaseName = mapClassificationToDisease(result);
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+    }
+    
+    // Parse the JSON response
+    const data = await response.json();
+    console.log("Received classification result:", data);
+    
+    // Match the disease with our database
+    const diseaseName = data.disease;
     const diseaseInfo = diseaseDatabase[diseaseName as keyof typeof diseaseDatabase];
+    
+    if (!diseaseInfo) {
+      throw new Error(`Unknown disease: ${diseaseName}`);
+    }
     
     return {
       disease: diseaseName,
-      confidence: result.confidence,
+      confidence: data.confidence,
       symptoms: diseaseInfo.symptoms,
       treatment: diseaseInfo.treatment
     };
@@ -131,18 +114,4 @@ export const classifyImage = async (imageUrl: string) => {
     console.error("Classification error:", error);
     throw new Error("Failed to classify image");
   }
-};
-
-// Simulate model prediction (for demo purposes)
-const simulateModelPrediction = async (imageUrl: string) => {
-  // This function simulates a model prediction
-  // In a real app, you would use your trained model
-  return new Promise<{label: string, confidence: number}>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        label: "prediction_class",
-        confidence: 0.75 + Math.random() * 0.2  // Random confidence between 0.75 and 0.95
-      });
-    }, 2000); // Simulate processing time
-  });
 };
