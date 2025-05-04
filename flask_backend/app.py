@@ -3,11 +3,11 @@ import os
 import numpy as np
 from PIL import Image
 import json
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from tensorflow.keras.models import load_model
 import gdown
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/flask_backend/static")
 
 UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -46,7 +46,9 @@ CLASS_NAMES = ['Allergy', 'Infection', 'Mange', 'Normal', 'Tumor']
 def index():
     return render_template("index.html")
 
+# Make the predict endpoint accessible at both paths
 @app.route("/predict", methods=["POST"])
+@app.route("/flask_backend/predict", methods=["POST"])
 def predict():
     if model is None:
         return jsonify({"error": "Model not loaded"}), 500
@@ -79,7 +81,13 @@ def predict():
         })
     
     except Exception as e:
+        print(f"❌ Prediction error: {e}")
         return jsonify({"error": str(e)}), 500
+
+# Serve static files
+@app.route('/flask_backend/static/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -81,9 +81,11 @@ export const classifyImage = async (imageDataUrl: string): Promise<DiagnosisResu
     const formData = new FormData();
     formData.append('image', imageBlob, 'image.jpg');
     
-    // Send to backend API
+    // Send to backend API with the correct URL
     console.log("Sending image to backend for classification...");
-    const response = await fetch('/predict', {
+    
+    // Use the correct URL for the Flask backend
+    const response = await fetch('/flask_backend/predict', {
       method: 'POST',
       body: formData,
     });
