@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# Dog Disease Detection App
 
-## Project info
+A Streamlit application that uses deep learning to detect diseases in dog images. The app can classify images into five categories: Allergy, Infection, Mange, Normal, and Tumor.
 
-**URL**: https://lovable.dev/projects/05e54e62-1f64-4040-a054-a905c07b636e
+## Features
 
-## How can I edit this code?
+- Upload and analyze dog images
+- Real-time disease detection
+- Confidence score display
+- Detailed probability breakdown for all classes
+- User-friendly interface
 
-There are several ways of editing your application.
+## Setup and Installation
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/05e54e62-1f64-4040-a054-a905c07b636e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```bash
+git clone <your-repository-url>
+cd VetHub
 ```
 
-**Edit a file directly in GitHub**
+2. Install the required packages:
+```bash
+pip install -r requirements.txt
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Run the application locally:
+```bash
+streamlit run flask_backend/app_streamlit.py
+```
 
-**Use GitHub Codespaces**
+## Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Start the application
+2. Upload your trained model file (dog_disease_model_96.h5) using the sidebar
+3. Once the model is loaded, upload a dog image
+4. Click "Predict" to get the analysis results
 
-## What technologies are used for this project?
+## Deployment
 
-This project is built with:
+The app is deployed on Streamlit Cloud. To use it:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Visit the deployed app URL
+2. Upload your model file through the sidebar
+3. Upload dog images for analysis
 
-## How can I deploy this project?
+## Model Requirements
 
-Simply open [Lovable](https://lovable.dev/projects/05e54e62-1f64-4040-a054-a905c07b636e) and click on Share -> Publish.
+- Input image size: 300x300 pixels
+- Supported image formats: JPG, JPEG, PNG
+- Model format: .h5 (Keras/TensorFlow)
 
-## Can I connect a custom domain to my Lovable project?
+## Technologies Used
 
-Yes, you can!
+- Python
+- Streamlit
+- TensorFlow
+- NumPy
+- Pillow
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+[Your chosen license]

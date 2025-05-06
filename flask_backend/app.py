@@ -10,7 +10,7 @@ UPLOAD_FOLDER = 'flask_backend/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ✅ Path to your .h5 model
-MODEL_PATH = "flask_backend/dog_disease_model_96_.h5"
+MODEL_PATH = "flask_backend/dog_disease_model_96.h5"
 
 # Load the model
 model = None
