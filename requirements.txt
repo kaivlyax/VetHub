@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 Flask==2.3.2
 tensorflow-macos==2.13.0
+=======
+streamlit==1.32.0
+tensorflow==2.13.0
+>>>>>>> 5d16976
 numpy==1.24.3
 Pillow==9.5.0
+h5py==3.9.0
 gunicorn==21.2.0
+<<<<<<< HEAD
 streamlit==1.32.0
 tensorflow==2.13.0
 h5py==3.9.0
+=======
+gdown==4.7.1
+>>>>>>> 5d16976
